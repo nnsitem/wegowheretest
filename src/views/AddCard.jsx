@@ -1,6 +1,9 @@
 import { useState, useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
+import { useForm, Controller } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { object, string, number } from 'yup';
 
 // @import main container
 import MainContainer from 'navigation/layout/MainContainer';
@@ -19,29 +22,33 @@ import VerifiedOmise from 'assets/svg/omise-grey.svg';
 import { useStateLoading } from 'hooks';
 import cardController from 'store/controller/card.controller';
 
-export default function AddCard({ navigation: { navigate } }) {
+export default function AddCard({ navigation: { goBack } }) {
   const dispatch = useDispatch();
-  const { card_list } = useSelector((state) => state['card']);
 
-  const [cardNumber, setCardNumber] = useState('');
-  const [expiryDate, setExpiryDate] = useState('');
+  const validationSchema = object().shape({
+    card_no: string()
+      .required('Card number is required')
+      .min(16, 'Card number must be at least 16 characters'),
+  });
+
+  const { control, handleSubmit } = useForm({
+    defaultValues: {
+      card_no: '',
+      holder_name: '',
+      expiry_date: '',
+      ccv: '',
+    },
+    resolver: yupResolver(validationSchema),
+  });
 
   // setup loader
   const [loading, setLoading] = useStateLoading(['addNewCard']);
 
-  const formatExpiryDate = (input) => {
-    const formattedInput = input
-      .replace(/[^\d]/g, '')
-      .replace(/(\d{2})(\d{0,2})/, (match, p1, p2) => (p2 ? `${p1}/${p2}` : p1))
-      .trim();
-    return formattedInput;
-  };
-
   const handleAddNewCard = useCallback(
-    () =>
+    (data) =>
       setLoading('addNewCard', async () => {
-        const { success } = await dispatch(cardController.addNewCard('asdeuei'));
-        success && navigate('Cards', { params: { reload: true } });
+        const { success } = await dispatch(cardController.addNewCard(data));
+        success && goBack();
       }),
     []
   );
@@ -50,29 +57,65 @@ export default function AddCard({ navigation: { navigate } }) {
     <MainContainer>
       <View style={styles.innerContainer}>
         <View style={styles.contentContainer}>
-          <CardInputField
-            label="ATM/Debit/Credit Card Number"
-            value={cardNumber}
-            onChange={setCardNumber}
+          <Controller
+            name="card_no"
+            control={control}
+            render={({ field: { onChange, value }, fieldState: { error } }) => (
+              <CardInputField
+                value={value}
+                label="ATM/Debit/Credit Card Number"
+                error={error}
+                onChange={onChange}
+              />
+            )}
           />
-          <InputField label="Name on Card" placeholder="Ty Lee" />
+
+          <Controller
+            name="holder_name"
+            control={control}
+            render={({ field: { onChange, value } }) => (
+              <InputField
+                value={value}
+                label="Name on Card"
+                placeholder="Ty Lee"
+                onChange={onChange}
+              />
+            )}
+          />
 
           <View style={styles.rowContainer}>
-            <InputField
-              label="Expiry Date"
-              placeholder="MM/YY"
-              value={expiryDate}
-              onChangeText={(text) => setExpiryDate(formatExpiryDate(text))}
-              keyboardType="numeric"
-              maxLength={5}
-              style={{ marginRight: 8 }}
+            <Controller
+              name="expiry_date"
+              control={control}
+              render={({ field: { onChange, value } }) => (
+                <InputField
+                  label="Expiry Date"
+                  placeholder="MM/YY"
+                  value={value}
+                  onChange={onChange}
+                  keyboardType="numeric"
+                  maxLength={5}
+                  mask={[/\d/, /\d/, '/', /\d/, /\d/]}
+                  style={{ marginRight: 8 }}
+                  useMasked
+                />
+              )}
             />
-            <InputField
-              label="CVV"
-              placeholder="123"
-              keyboardType="numeric"
-              maxLength={3}
-              style={{ marginLeft: 8 }}
+
+            <Controller
+              name="ccv"
+              control={control}
+              render={({ field: { onChange, value } }) => (
+                <InputField
+                  value={value}
+                  label="CVV"
+                  placeholder="123"
+                  onChange={onChange}
+                  keyboardType="numeric"
+                  maxLength={3}
+                  style={{ marginLeft: 8 }}
+                />
+              )}
             />
           </View>
 
@@ -84,7 +127,11 @@ export default function AddCard({ navigation: { navigate } }) {
         </View>
 
         <View style={{ position: 'absolute', bottom: 0, alignSelf: 'center', width: '100%' }}>
-          <Button label="Add Card" loading={loading.addNewCard} onPress={handleAddNewCard} />
+          <Button
+            label="Add Card"
+            loading={loading.addNewCard}
+            onPress={handleSubmit(handleAddNewCard)}
+          />
         </View>
       </View>
     </MainContainer>
@@ -108,7 +155,7 @@ const styles = StyleSheet.create({
   },
   verifiedContainer: {
     width: 224,
-    marginTop: 32,
+    marginTop: 16,
     justifyContent: 'space-evenly',
     alignItems: 'center',
     flexDirection: 'row',

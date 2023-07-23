@@ -1,5 +1,5 @@
 {
-  "cSpell.words": ["Parens", "reduxjs"],
+  "cSpell.words": ["hookform", "omise", "Parens", "reduxjs"],
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": true
   }

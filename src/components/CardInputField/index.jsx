@@ -1,48 +1,58 @@
-import { useMemo } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
+import MaskInput, { Masks } from 'react-native-mask-input';
 
 // @import svg icons
 import VisaIcon from 'assets/svg/visa_color@2x.svg';
 import MasterCardIcon from 'assets/svg/mastercard_color@2x.svg';
 import JCBIcon from 'assets/svg/jcb_color@2x.svg';
 
-export default function CardInputField({ value = '', label, onChange }) {
+const creditCardType = require('credit-card-type');
+
+export default function CardInputField({ value = '', label, error, onChange }) {
   const iconConfig = { width: 24, height: 24 };
 
-  const formatCardNumber = (input) =>
-    input
-      .replace(/\s/g, '')
-      .replace(/(\d{4})/g, '$1 ')
-      .trim();
+  const renderIcons = () => {
+    const cardType = creditCardType(value)[0]?.type;
 
-  const inputStyle = { flex: 0.75 };
+    if (value.length > 0) {
+      switch (cardType) {
+        case 'visa':
+          return <VisaIcon {...iconConfig} />;
+        case 'mastercard':
+          return <MasterCardIcon {...iconConfig} />;
+        case 'jcb':
+          return <JCBIcon {...iconConfig} />;
+        default:
+          break;
+      }
+    }
 
-  const renderIcons = () =>
-    useMemo(
-      () => (
-        <View style={styles.iconContainer}>
-          <VisaIcon {...iconConfig} />
-          <MasterCardIcon {...iconConfig} />
-          <JCBIcon {...iconConfig} />
-        </View>
-      ),
-      []
+    return (
+      <>
+        <VisaIcon {...iconConfig} />
+        <MasterCardIcon {...iconConfig} />
+        <JCBIcon {...iconConfig} />
+      </>
     );
+  };
 
   return (
     <View style={styles.inputWrapper}>
       <Text style={styles.inputLabel}>{label}</Text>
-      <View style={styles.inputContainer}>
-        <TextInput
+      <View style={[styles.inputContainer, error && styles.errorBorder]}>
+        <MaskInput
+          value={value}
           placeholder="0000 0000 0000 0000"
-          value={formatCardNumber(value)}
-          onChangeText={onChange}
+          onChangeText={(_, unmasked) => onChange(unmasked)}
           keyboardType="numeric"
           maxLength={19}
-          style={inputStyle}
+          mask={Masks.CREDIT_CARD}
+          style={styles.inputStyle}
         />
-        {renderIcons()}
+
+        <View style={styles.iconContainer}>{renderIcons()}</View>
       </View>
+      {error && <Text style={[styles.inputLabel, styles.errorText]}>{error?.message}</Text>}
     </View>
   );
 }
@@ -69,10 +79,21 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     padding: 16,
   },
+
+  inputStyle: {
+    flex: 1,
+  },
   iconContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    flex: 0.25,
+  },
+  errorText: {
+    color: 'red',
+    margin: 0,
+    alignSelf: 'flex-end',
+  },
+  errorBorder: {
+    borderColor: 'red',
   },
 });

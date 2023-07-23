@@ -10,7 +10,7 @@ const HideKeyboard = ({ children }) => (
   <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>{children}</TouchableWithoutFeedback>
 );
 
-export default function MainContainer({ children }) {
+export default function MainContainer({ children, noPadding }) {
   const keyboardVerticalOffset = Platform.OS === 'ios' ? 102 : 0;
 
   return (
@@ -18,7 +18,7 @@ export default function MainContainer({ children }) {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' && 'padding'}
         keyboardVerticalOffset={keyboardVerticalOffset}
-        style={styles.wrapper}
+        style={[styles.wrapper, noPadding && styles.noPadding]}
       >
         <HideKeyboard>{children}</HideKeyboard>
       </KeyboardAvoidingView>
@@ -35,5 +35,9 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 24,
     paddingVertical: 16,
+  },
+  noPadding: {
+    paddingHorizontal: 0,
+    paddingVertical: 0,
   },
 });

@@ -1,10 +1,20 @@
 import { StyleSheet, Text, TextInput, View } from 'react-native';
+import MaskInput, { Masks } from 'react-native-mask-input';
 
-export default function InputField({ label, value, onChange, style, ...rest }) {
+export default function InputField({ label, value, onChange, style, useMasked, ...rest }) {
   return (
     <View style={[styles.inputWrapper, style]}>
       <Text style={styles.inputLabel}>{label}</Text>
-      <TextInput value={value} onChangeText={onChange} style={styles.inputContainer} {...rest} />
+      {useMasked ? (
+        <MaskInput
+          value={value}
+          onChangeText={(_, unmasked) => onChange(unmasked)}
+          style={styles.inputContainer}
+          {...rest}
+        />
+      ) : (
+        <TextInput value={value} onChangeText={onChange} style={styles.inputContainer} {...rest} />
+      )}
     </View>
   );
 }
